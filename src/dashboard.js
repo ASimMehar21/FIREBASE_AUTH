@@ -101,14 +101,32 @@ const Home = ({requestLogout,navigation,user}) => {
 	function handleButtonPress () {
 		// if (roomName.length > 0) {
 		  // create new thread using firebase & firestore
+		var list = [];
+		  db.collection("users")
+			.onSnapshot((querySnapshot) => {
+				querySnapshot.forEach((doc) => {
+				// console.log(doc.id);
+				// list.push(doc.data(),doc.id)
+				const { name, email, mobile } = doc.data();
+				list.push({
+					key: doc.id,
+					doc,
+					name,
+					email,
+					mobile,
+				});
+				});
+			});
+
 		  db
 			.collection('MESSAGE_THREADS')
 			.add({
-			  name: user.name,
-			  latestMessage: {
-				text: `${user.name} created. Welcome!`,
-				createdAt: new Date().getTime()
-			  }
+				
+				name: user.name,
+				latestMessage: {
+					text: `${user.name} created. Welcome!`,
+					createdAt: new Date().getTime()
+				}
 			})
 			.then((docRef) => {
 				docRef.collection('MESSAGES').add({
