@@ -10,18 +10,7 @@ import Firebase from '../config/firebase'
 
 
 const Login = ({navigation,user,updateEmail, updatePassword, login, getUser}) => {
-    // constructor(props) {
-    //     super(props);
-    //     this.state = {
-    //         isLoading: false,
-    //         isChecked: false,
-    //         isLoading: false,
-    //         error_message: '',
-    //         showpass: true
-    //     }
-    // }
 
-    // console.log(user);
     const [isLoading,setIsLoading ] = useState(false);
     const [error_message,seterror_message ] = useState('');
     const [showpass,setShowpass ] = useState(true);
@@ -44,22 +33,6 @@ const Login = ({navigation,user,updateEmail, updatePassword, login, getUser}) =>
         
     }, [])
 
-    // componentDidMount = () => {
-	// 	Firebase.auth().onAuthStateChanged(user => {
-	// 		if (user) {
-    //             // console.log(user);
-	// 			this.props.getUser(user.uid)
-	// 			if (this.props.user != null) {
-	// 				this.props.navigation.navigate('Home')
-	// 			}
-	// 		}
-	// 	})
-	// }
-
-
-
-
-    
 
     form_validation = () => {
         this.setState({ isLoading: true })
@@ -90,11 +63,7 @@ const Login = ({navigation,user,updateEmail, updatePassword, login, getUser}) =>
         return (false)
     }
 
-    // function login ()  {
-    //     // setIsLoading(!isLoading)
-    //     login_request()
-    // }
-
+    
     
         return (
             <View style={styles.container}>

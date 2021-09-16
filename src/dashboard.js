@@ -7,6 +7,7 @@ import { bindActionCreators } from 'redux'
 import { ScrollView } from 'react-native-gesture-handler'
 import Toast from "react-native-tiny-toast";
 import { toUpper } from 'lodash'
+import {storeUsers,Logout} from './redux/actions/firebase'
 
 
 const Home = ({requestLogout,navigation,user}) => {
@@ -45,9 +46,7 @@ const Home = ({requestLogout,navigation,user}) => {
 			});
 		});
 		await setUsers(list)
-		setTimeout(() => {
-			// console.log(users);
-		}, 500);
+	
 		setTimeout(() => {
 			setIsLoading(false)
 		}, 1500);
@@ -60,11 +59,7 @@ const Home = ({requestLogout,navigation,user}) => {
 		if(name === ''){
 		 alert('Fill at least your name!')
 		} else {
-		  db.collection('userList').add({
-			name: name,
-			email: email,
-			mobile: phone,
-		  }).then((res) => {
+		  storeUsers(name,email,phone).then((res) => {
 			  setName()
 			  setEmail()
 			  setPhone()
@@ -73,13 +68,7 @@ const Home = ({requestLogout,navigation,user}) => {
 			  setUsers([])
 			  getUser()
 			  Toast.show('User Added Sucessfully')
-			// this.setState({
-			//   name: '',
-			//   email: '',
-			//   mobile: '',
-			//   isLoading: false,
-			// });
-			// this.props.navigation.navigate('UserScreen')
+			
 		  })
 		  .catch((err) => {
 			console.error("Error found: ", err);
@@ -94,50 +83,40 @@ const Home = ({requestLogout,navigation,user}) => {
 	 function handleSignout  ()  {
 		requestLogout()
 		console.log(user);
-		Firebase.auth().signOut()
+		Logout()
 		navigation.replace('Login')
 	}
 
 	function handleButtonPress () {
-		// if (roomName.length > 0) {
-		  // create new thread using firebase & firestore
-		var list = [];
-		  db.collection("users")
-			.onSnapshot((querySnapshot) => {
-				querySnapshot.forEach((doc) => {
-				// console.log(doc.id);
-				// list.push(doc.data(),doc.id)
-				const { name, email, mobile } = doc.data();
-				list.push({
-					key: doc.id,
-					doc,
-					name,
-					email,
-					mobile,
-				});
-				});
-			});
-
-		  db
-			.collection('MESSAGE_THREADS')
-			.add({
+			
+		//   db
+		// 	.collection('MESSAGE_THREADS')
+		// 	.add({
 				
-				name: user.name,
-				latestMessage: {
-					text: `${user.name} created. Welcome!`,
-					createdAt: new Date().getTime()
-				}
-			})
-			.then((docRef) => {
-				docRef.collection('MESSAGES').add({
-					text: `You have joined the room ${user.name}.`,
-					createdAt: new Date().getTime(),
-					system: true
-				  });
+		// 		name: user.name,
+		// 		latestMessage: {
+		// 			text: `${user.name} created. Welcome!`,
+		// 			createdAt: new Date().getTime()
+		// 		}
+		// 	})
+		// 	.then((docRef) => {
+		// 		docRef.collection('MESSAGES').add({
+		// 			text: `You have joined the room ${user.name}.`,
+		// 			createdAt: new Date().getTime(),
+		// 			system: true
+		// 		  });
 				navigation.navigate('Chat')
-			})
+		// 	})
 		// }
 	}
+
+
+
+
+
+
+
+
 		return (
 			<View style={styles.container}>
 				<View style={{padding:20}}>
@@ -195,7 +174,7 @@ const Home = ({requestLogout,navigation,user}) => {
 				<View style={{ marginTop: 10, flexDirection: 'row' }}>
 						<Text style={{ margin: 20, alignSelf: 'flex-start', marginTop: -5 }}>Get Chats:</Text>
 						<View style={{ flex: 1, marginRight: 15 }}>
-						<TouchableOpacity onPress={()=>handleButtonPress()} style={{ backgroundColor: '#a2a2a2', width: 50, height: 50, borderRadius: 10, alignSelf: 'flex-end', justifyContent: 'center' }} >
+						<TouchableOpacity onPress={()=>navigation.navigate('Chat')} style={{ backgroundColor: '#a2a2a2', width: 50, height: 50, borderRadius: 10, alignSelf: 'flex-end', justifyContent: 'center' }} >
 							<Text style={{ alignSelf: 'center', color: 'white' }}>Get</Text>
 						</TouchableOpacity>
 						</View>

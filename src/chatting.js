@@ -1,11 +1,11 @@
 import React,{useState} from 'react'
-import { View, Text, StyleSheet,FlatList,ActivityIndicator, Button,TouchableOpacity,TextInput } from 'react-native'
+import { View, Text, StyleSheet,ImageBackground,Dimensions,TouchableHighlight,FlatList,ActivityIndicator, Button,TouchableOpacity,TextInput, ScrollView } from 'react-native'
 import { connect } from 'react-redux'
 import Firebase, {db} from '../config/firebase'
 import { getUser, requestLogout } from './redux/actions/user'
 import { bindActionCreators } from 'redux'
-import { List, Divider } from 'react-native-paper';
 import { IconButton } from 'react-native-paper';
+import {getMessages,handleSendfb} from './redux/actions/firebase'
 
 import {
   GiftedChat,
@@ -13,21 +13,24 @@ import {
   Send,
   SystemMessage
 } from 'react-native-gifted-chat';
+import * as ImagePicker from 'expo-image-picker';
+import * as Permissions from 'expo-permissions';
+import {Ionicons,Entypo} from "react-native-vector-icons";
+
 
 function chatting({user,navigation,route }) {
 
 
   const [messages, setMessages] = useState([]);
+  const [fbimages, setFbimages] = useState("");
   const { thread } = route.params;
   const currentUser = user;
 
   async function handleSend(messages) {
     const text = messages[0].text;
 
-    db
-      .collection('THREADS')
-      .doc(thread._id)
-      .collection('MESSAGES')
+    if(fbimages.length < 1 ){
+      handleSendfb(thread)
       .add({
         text,
         createdAt: new Date().getTime(),
@@ -36,6 +39,20 @@ function chatting({user,navigation,route }) {
           email: currentUser.email
         }
       });
+    }else{
+      handleSendfb(thread)
+      .add({
+        text,
+        image:fbimages,
+        createdAt: new Date().getTime(),
+        user: {
+          _id: currentUser.uid,
+          email: currentUser.email
+        }
+      });
+    }
+    setFbimages("")
+   
 
     await db
       .collection('THREADS')
@@ -49,21 +66,19 @@ function chatting({user,navigation,route }) {
         },
         { merge: true }
       );
+
   }
 
   React.useEffect(() => {
-    const messagesListener = db
-      .collection('THREADS')
-      .doc(thread._id)
-      .collection('MESSAGES')
-      .orderBy('createdAt', 'desc')
+    getMessages(thread)
       .onSnapshot(querySnapshot => {
         const messages = querySnapshot.docs.map(doc => {
           const firebaseData = doc.data();
-
+          console.log(firebaseData);
           const data = {
             _id: doc.id,
             text: '',
+            image:'',
             createdAt: new Date().getTime(),
             ...firebaseData
           };
@@ -82,7 +97,7 @@ function chatting({user,navigation,route }) {
       });
 
     // Stop listening for updates whenever the component unmounts
-    return () => messagesListener();
+    // return () => messagesListener();
   }, []);
 
   function renderBubble(props) {
@@ -131,7 +146,69 @@ function chatting({user,navigation,route }) {
     );
   }
 
+
+  async function addImage () {
+    console.log("calling");
+    setFbimages("")
+    const pickerResult = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      base64: true,
+      allowsEditing: true,
+    })
+
+    if (!pickerResult.cancelled) {
+
+      console.log('***********************');
+
+      const imageUri = pickerResult ? `data:image/jpg;base64,${pickerResult.base64}` : null
+      imageUri && { uri: imageUri }
+      // this.state.multipleUrl.push(imageUri)
+      setTimeout(() => {
+        // console.log(imageUri);
+        setFbimages(imageUri)
+        // setFbimages({...fbimages, imageUri})
+        console.log("done");
+      }, 3000);
+    setTimeout(() => {
+      console.log(fbimages);
+    }, 5000);
+    
+    }
+  }
+
+
+  function _renderImages  () {
+    console.log("calling render images");
+    
+      return(
+        <ImageBackground  source={{ uri: fbimages }} style={{ width: 50, margin: 5, height: 50 }} imageStyle={{ borderRadius: 10 }} >
+          <View style={{ alignSelf: 'flex-end', flex: 0.5 }}>
+            {/* <TouchableOpacity onPress={() => this.remove_image(index)}> 
+              <Entypo name="circle-with-cross" size={26} color="red" />
+            </TouchableOpacity> */}
+          </View>
+        </ImageBackground>
+        )
+  }
+
   return (
+    <View style={{flex:1}}>
+      <Ionicons
+        name="ios-camera"
+        size={35}
+        style={{
+          top:10,
+          right:25,
+          position: "absolute",
+          shadowColor: "#000",
+          shadowOffset: { width: 0, height: 0 },
+          shadowOpacity: 0.5,
+          zIndex: 2,
+          backgroundColor: "transparent"
+      }}
+      onPress={addImage}
+    />
+    
     <GiftedChat
       messages={messages}
       onSend={handleSend}
@@ -139,13 +216,32 @@ function chatting({user,navigation,route }) {
       placeholder='Type your message here...'
       alwaysShowSend
       showUserAvatar
-      scrollToBottom
+      // scrollToBottom
+      isAnimated
       renderBubble={renderBubble}
       // renderLoading={renderLoading}
       renderSend={renderSend}
       scrollToBottomComponent={scrollToBottomComponent}
       renderSystemMessage={renderSystemMessage}
+      renderActions={() => {
+
+        return (
+            <>
+            
+            </>
+          );
+    }}
     />
+    {fbimages.length < 1?
+      <></>
+      :
+      <View style={{ height: 80,position:'absolute', alignItems: 'center', flexDirection: 'row', alignSelf: 'center', justifyContent: 'flex-start',left:10, bottom:50}}>
+        <ScrollView horizontal={true} showsHorizontalScrollIndicator={false}>
+          {_renderImages()}            
+        </ScrollView>
+      </View>
+      }
+    </View>
   );
 }
 

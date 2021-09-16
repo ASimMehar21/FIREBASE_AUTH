@@ -2,12 +2,13 @@ import React,{useState} from 'react'
 import { View, Text, StyleSheet,FlatList,ActivityIndicator, Button,TouchableOpacity,TextInput } from 'react-native'
 import { connect } from 'react-redux'
 import Firebase, {db} from '../config/firebase'
-import { getUser, requestLogout } from './redux/actions/user'
+import { requestLogout } from './redux/actions/user'
 import { bindActionCreators } from 'redux'
 import { List, Divider } from 'react-native-paper';
 import { ScrollView } from 'react-native-gesture-handler'
 import Toast from "react-native-tiny-toast";
 import { toUpper } from 'lodash'
+import {getUser,fetchUsers} from './redux/actions/firebase'
 
 const chats = ({user,navigation}) => {
 
@@ -19,76 +20,51 @@ const chats = ({user,navigation}) => {
 	const [threads, setThreads] = useState([]);
 
     React.useEffect(() => {
-		fetchGroupByUserID()
-		getUser()
+		// fetchGroupByUserID()
+		getUsers()
 
-		navigation.addListener("focus", () => {
-			getUser()
-		})
+		// navigation.addListener("focus", () => {
+		// 	// getUser()
+		// })
 	}, [])
 
 
-    async function getUser   ()  {
+    async function getUsers   ()  {
 		setIsLoading(true)
-		var list = [];
-		db.collection("users")
-		.onSnapshot((querySnapshot) => {
-			querySnapshot.forEach((doc) => {
-			// console.log(doc.id);
-			// list.push(doc.data(),doc.id)
-			const { name, email, mobile } = doc.data();
-			list.push({
-				key: doc.id,
-				doc,
-				name,
-				email,
-				mobile,
-			});
-			});
-		});
-		await setUsers(list)
-		setTimeout(() => {
-			// console.log(users);
-		}, 1000);
-		setTimeout(() => {
-			setIsLoading(false)
-		}, 1500);
+		getUser(user)
+		fetchGroupByUserID()
 	  };
 
    
-	  async function fetchGroupByUserID (){
-		setIsLoading(true)
-
-		  console.log("callinf");
-		const unsubscribe = db
-		.collection('MESSAGE_THREADS')
-		.orderBy('latestMessage.createdAt', 'desc')
-		.onSnapshot(querySnapshot => {
-		  const threads = querySnapshot.docs.map(documentSnapshot => {
-			return {
-			  _id: documentSnapshot.id,
-			  // give defaults
-			  name: '',
-  
-			  latestMessage: {
-				text: ''
-			  },
-			  ...documentSnapshot.data()
-			};
-		  });
-  
-		  setThreads(threads);
-  
-		  setTimeout(() => {
-			setIsLoading(false)
-		}, 1500);
+	async function fetchGroupByUserID (){
+	setIsLoading(true)
+		fetchUsers().onSnapshot(querySnapshot => {
+			const Threads = querySnapshot.docs.map(documentSnapshot => {
+				return {
+					_id: documentSnapshot.id,
+					// give defaults
+					name: '',
+		
+					latestMessage: {
+					text: ''
+					},
+					...documentSnapshot.data()
+				};
+			})
+			console.log("Threads");
+			const obj  = [];
+				Threads.forEach((item)=>{
+				if(item.name != user.name ){
+					obj.push(item)
+				}
+			})
+			setThreads(obj)
+			setTimeout(() => {
+				setIsLoading(false)
+			}, 1500);
+			return () => unsubscribe();
 		});
-  
-	  /**
-	   * unsubscribe listener
-	   */
-	  return () => unsubscribe();
-	  }
+	}
 
 
 
